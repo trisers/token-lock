@@ -1,9 +1,12 @@
+// src/app/page.tsx
 import React from 'react'
 
-const page = () => {
+const HomePage = () => {
   return (
-    <div>page</div>
+    <div>
+        Dashboard Page
+    </div>
   )
 }
 
-export default page
+export default HomePage
