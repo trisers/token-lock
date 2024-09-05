@@ -30,7 +30,7 @@ const Sidebar: React.FC = () => {
             <li key={index}>
               <Link
                 href={item.href}
-                className={`flex items-center p-4 hover:bg-gray-100 ${
+                className={`flex items-center p-4 hover:bg-gray-100  hover:text-black ${
                   isOpen ? 'justify-start space-x-4' : 'justify-center'
                 } ${pathname === item.href ? 'bg-blue-600 text-white' : ''}`}
               >
