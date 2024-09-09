@@ -32,7 +32,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between h-full">
+    <div className="bg-white shadow-md border rounded-lg p-4 flex flex-col justify-between h-full">
       <div>
         <div className="flex  items-center mb-[37px]">
           <h2 className="text-xl font-semibold">{title}</h2>
