@@ -7,6 +7,7 @@ import { Home, BarChart2, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { useSidebar } from '../contexts/SidebarContext';
 
 const Sidebar: React.FC = () => {
+  
   const { isOpen } = useSidebar();
   const pathname = usePathname();
 

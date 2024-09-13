@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pencil, X } from 'lucide-react';
 
 interface EligibilityConditionsProps {
   eligibilityConditions: any[];
+  evaluateCondition: 'all' | 'any';
   onConditionsChange: (value: any[]) => void;
+  onEvaluateConditionChange: (value: 'all' | 'any') => void;
 }
 
 interface ModalProps {
@@ -46,21 +48,45 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 };
 
 const AddConditionModal: React.FC<AddConditionModalProps> = ({ isOpen, onClose, onSave, editCondition, editIndex }) => {
-  const [activeTab, setActiveTab] = useState(editCondition ? editCondition.type : 'ownToken');
-  const [ownTokenData, setOwnTokenData] = useState<OwnTokenData>(
-    editCondition && editCondition.type === 'ownToken'
-      ? editCondition
-      : { platform: 'Ethereum', quantity: '1', contractAddress: '', tokenIds: [] }
-  );
-
-  const [addressListData, setAddressListData] = useState<AddressListData>(
-    editCondition && editCondition.type === 'addressList'
-      ? editCondition
-      : { operator: 'Includes', walletAddresses: [] }
-  );
+  const [activeTab, setActiveTab] = useState<'ownToken' | 'addressList'>('ownToken');
+  const [ownTokenData, setOwnTokenData] = useState<OwnTokenData>({
+    platform: 'Ethereum',
+    quantity: '1',
+    contractAddress: '',
+    tokenIds: []
+  });
+  const [addressListData, setAddressListData] = useState<AddressListData>({
+    operator: 'Includes',
+    walletAddresses: []
+  });
 
   const [tempTokenId, setTempTokenId] = useState('');
   const [tempWalletAddress, setTempWalletAddress] = useState('');
+
+
+  useEffect(() => {
+    if (editCondition) {
+      setActiveTab(editCondition.type);
+      if (editCondition.type === 'ownToken') {
+        setOwnTokenData(editCondition);
+      } else if (editCondition.type === 'addressList') {
+        setAddressListData(editCondition);
+      }
+    } else {
+      // Reset to default values when adding a new condition
+      setActiveTab('ownToken');
+      setOwnTokenData({
+        platform: 'Ethereum',
+        quantity: '1',
+        contractAddress: '',
+        tokenIds: []
+      });
+      setAddressListData({
+        operator: 'Includes',
+        walletAddresses: []
+      });
+    }
+  }, [editCondition, isOpen]);
 
   const handleSave = () => {
     const data = activeTab === 'ownToken' ? ownTokenData : addressListData;
@@ -267,17 +293,21 @@ const AddConditionModal: React.FC<AddConditionModalProps> = ({ isOpen, onClose, 
   );
 };
 
+
+
 const EligibilityConditions: React.FC<EligibilityConditionsProps> = ({
   eligibilityConditions,
+  evaluateCondition,
   onConditionsChange,
+  onEvaluateConditionChange,
 }) => {
-  const [conditionType, setConditionType] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCondition, setEditingCondition] = useState<{ condition: any; index: number } | null>(null);
 
-  const handleConditionTypeChange = (type: string) => {
-    setConditionType(type);
+  const handleConditionTypeChange = (type: 'all' | 'any') => {
+    onEvaluateConditionChange(type);
   };
+
 
   const handleAddCondition = (type: string, data: any, editIndex?: number) => {
     if (editIndex !== undefined) {
@@ -320,8 +350,8 @@ const EligibilityConditions: React.FC<EligibilityConditionsProps> = ({
       <div className="flex items-center mb-4">
         <select
           className="mr-2 px-3 py-2 border border-gray-300 rounded"
-          value={conditionType}
-          onChange={(e) => handleConditionTypeChange(e.target.value)}
+          value={evaluateCondition}
+          onChange={(e) => handleConditionTypeChange(e.target.value as 'all' | 'any')}
         >
           <option value="all">All</option>
           <option value="any">Any</option>

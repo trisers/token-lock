@@ -10,17 +10,12 @@ import DateRange from '../components/createCampaign/DateRange';
 import ProductSelection from '../components/createCampaign/ProductSelection';
 import EligibilityConditions from '../components/createCampaign/EligibilityConditions';
 
-interface EditCampaignPageProps {
-  params: { id: string };
-}
-
-const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
+const CreateCampaignPage: React.FC = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    id: '',
     campaignName: '',
-    campaignType: 'exclusive' as 'exclusive' | 'discount',
-    discountType: 'percentage' as 'percentage' | 'fixed',
+    campaignType: 'exclusive' as 'exclusive' | 'token_redemption' | 'discount',
+    discountType: '' as 'percentage' | 'fixed' | '',
     discountValue: 0,
     offerHeading: '',
     offerDescription: '',
@@ -28,49 +23,82 @@ const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
     endDate: '',
     autoActivate: false,
     selectedProducts: [] as number[],
-    eligibilityConditions: [] as string[],
+    eligibilityConditions: [] as any[],
+    productSelectionType: 'all' as 'all' | 'selected',
+    evaluateCondition: 'all' as 'all' | 'any',
   });
 
-  const [initialFormData, setInitialFormData] = useState({ ...formData });
-  const [isDirty, setIsDirty] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
-    const fetchCampaignData = async () => {
-      const response = await fetch(`/api/campaigns/${params.id}`);
-      const campaignData = await response.json();
-      setFormData(campaignData);
-      setInitialFormData(campaignData);
-    };
-
-    fetchCampaignData();
-  }, [params.id]);
-
-  useEffect(() => {
-    const isFormChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-    setIsDirty(isFormChanged);
-
     // Validate form
-    const isValid = 
+    const isValid: boolean = 
       formData.campaignName.trim() !== '' &&
       formData.offerHeading.trim() !== '' &&
       formData.offerDescription.trim() !== '' &&
       formData.startDate !== '' &&
       formData.endDate !== '' &&
-      formData.selectedProducts.length > 0 &&
       formData.eligibilityConditions.length > 0 &&
-      (formData.campaignType !== 'discount' || 
-        (formData.discountType && formData.discountValue > 0));
+      (formData.campaignType !== 'discount' ||
+        (formData.discountType !== '' && formData.discountValue > 0));
 
     setIsFormValid(isValid);
-  }, [formData, initialFormData]);
+  }, [formData]);
 
   const handleInputChange = (field: string, value: any) => {
+    setFormData((prevData) => {
+      if (field === 'campaignType') {
+        // Reset discount fields if campaign type is not 'discount'
+        if (value !== 'discount') {
+          return {
+            ...prevData,
+            [field]: value,
+            discountType: '',
+            discountValue: 0,
+          };
+        }
+      }
+      return {
+        ...prevData,
+        [field]: value,
+      };
+    });
+  };
+
+  // const handleProductSelectionChange = (selectedProducts: number[]) => {
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     selectedProducts,
+  //   }));
+  // };
+  
+
+  // const handleProductSelectionTypeChange = (selectionType: 'all' | 'selected') => {
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     productSelectionType: selectionType,
+  //     selectedProducts: selectionType === 'all' ? [] : prevData.selectedProducts,
+  //   }));
+  // };
+
+
+  const handleProductSelectionChange = (selectedProducts: number[]) => {
     setFormData((prevData) => ({
       ...prevData,
-      [field]: value,
+      selectedProducts,
+      productSelectionType: selectedProducts.length === 0 ? 'all' : 'selected',
     }));
   };
+
+
+  const handleProductSelectionTypeChange = (selectionType: 'all' | 'selected') => {
+    setFormData((prevData) => ({
+      ...prevData,
+      productSelectionType: selectionType,
+      selectedProducts: selectionType === 'all' ? [] : prevData.selectedProducts,
+    }));
+  };
+  
 
   const handleSave = async () => {
     if (!isFormValid) {
@@ -78,27 +106,38 @@ const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
       return;
     }
 
-    console.log('Saving form data:', formData);
-    
-    // Example API call (replace with your actual API endpoint)
-    // await fetch(`/api/campaigns/${params.id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(formData),
-    // });
+    try {
+      const campaignData = {
+        ...formData,
+        selectedProducts: formData.productSelectionType === 'all' ? [] : formData.selectedProducts,
+      };
 
-    setInitialFormData({ ...formData });
-    setIsDirty(false);
-    router.push('/campaign');
+      const response = await fetch('/api/createCampaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(campaignData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create campaign');
+      }
+
+      const result = await response.json();
+      console.log('Campaign created successfully:', result);
+      router.push('/');
+    } catch (error) {
+      console.error('Error saving campaign:', error);
+      alert('Failed to save campaign. Please try again.');
+    }
   };
 
   const handleCancel = () => {
-    router.push('/campaign');
+    router.push('/');
   };
 
   return (
     <div className="bg-gray-100 min-h-screen p-8">
-      <h1 className="text-2xl font-bold mb-6">Edit Campaign</h1>
+      <h1 className="text-2xl font-bold mb-6">Create Campaign</h1>
       <div className="bg-white rounded-lg shadow-md p-6 space-y-8">
         <CampaignBasicInfo
           campaignName={formData.campaignName}
@@ -135,18 +174,22 @@ const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
 
         <ProductSelection
           autoActivate={formData.autoActivate}
-          selectedProducts={formData.selectedProducts}
           onAutoActivateChange={(value) => handleInputChange('autoActivate', value)}
-          onProductsChange={(value) => handleInputChange('selectedProducts', value)}
+          onProductsChange={handleProductSelectionChange}
+          onProductSelectionTypeChange={handleProductSelectionTypeChange}
+          initialSelectedProducts={formData.selectedProducts}
+          initialProductSelectionType={formData.productSelectionType}
         />
 
         <EligibilityConditions
           eligibilityConditions={formData.eligibilityConditions}
+          evaluateCondition={formData.evaluateCondition}
           onConditionsChange={(value) => handleInputChange('eligibilityConditions', value)}
+          onEvaluateConditionChange={(value) => handleInputChange('evaluateCondition', value)}
         />
 
         <div className="flex justify-end space-x-4 mt-8">
-          <button 
+          <button
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             onClick={handleCancel}
           >
@@ -154,10 +197,10 @@ const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
           </button>
           <button
             className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ${
-              isDirty && isFormValid ? '' : 'opacity-50 cursor-not-allowed'
+              isFormValid ? '' : 'opacity-50 cursor-not-allowed'
             }`}
             onClick={handleSave}
-            disabled={!isDirty || !isFormValid}
+            disabled={!isFormValid}
           >
             Save
           </button>
@@ -167,4 +210,4 @@ const EditCampaignPage: React.FC<EditCampaignPageProps> = ({ params }) => {
   );
 };
 
-export default EditCampaignPage;
+export default CreateCampaignPage;

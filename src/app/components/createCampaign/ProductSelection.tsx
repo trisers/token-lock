@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface Product {
   id: number;
@@ -7,21 +7,26 @@ interface Product {
 
 interface ProductSelectionProps {
   autoActivate: boolean;
-  selectedProducts: number[];
   onAutoActivateChange: (value: boolean) => void;
   onProductsChange: (value: number[]) => void;
+  onProductSelectionTypeChange: (selectionType: 'all' | 'selected') => void;
+  initialSelectedProducts: number[];
+  initialProductSelectionType: 'all' | 'selected';
 }
 
 const ProductSelection: React.FC<ProductSelectionProps> = ({
   autoActivate,
-  selectedProducts,
   onAutoActivateChange,
   onProductsChange,
+  onProductSelectionTypeChange,
+  initialSelectedProducts,
+  initialProductSelectionType,
 }) => {
-  const [selectionType, setSelectionType] = useState<'selected' | 'all'>('selected');
+  const [productSelectionType, setProductSelectionType] = useState<'all' | 'selected'>(initialProductSelectionType);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>(initialSelectedProducts);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [tempSelectedProducts, setTempSelectedProducts] = useState<number[]>(selectedProducts);
+  const [tempSelectedProducts, setTempSelectedProducts] = useState<number[]>([]);
   const [searchProduct, setSearchProduct] = useState('');
 
   const products: Product[] = [
@@ -37,8 +42,36 @@ const ProductSelection: React.FC<ProductSelectionProps> = ({
   const productsPerPage = 5;
   const totalPages = Math.ceil(selectedProducts.length / productsPerPage);
 
+  const updateSelectedProducts = useCallback((newSelectedProducts: number[]) => {
+    setSelectedProducts(newSelectedProducts);
+    onProductsChange(newSelectedProducts);
+  }, [onProductsChange]);
+
+  useEffect(() => {
+    if (productSelectionType === 'all') {
+      const allProductIds = products.map(p => p.id);
+      // Only update selected products if they haven't already been set
+      if (selectedProducts.length !== allProductIds.length) {
+        updateSelectedProducts(allProductIds);
+      }
+    }
+  }, [productSelectionType, products, selectedProducts.length, updateSelectedProducts]);
+  
+
+  const handleSelectionTypeChange = (type: 'all' | 'selected') => {
+    setProductSelectionType(type);
+    onProductSelectionTypeChange(type);
+    if (type === 'all') {
+      const allProductIds = products.map(p => p.id);
+      updateSelectedProducts(allProductIds);
+    } else {
+      updateSelectedProducts([]);
+    }
+  };
+
   const handleRemoveProduct = (productId: number) => {
-    onProductsChange(selectedProducts.filter(id => id !== productId));
+    const updatedProducts = selectedProducts.filter(id => id !== productId);
+    updateSelectedProducts(updatedProducts);
   };
 
   const handleProductSelect = (productId: number) => {
@@ -50,24 +83,16 @@ const ProductSelection: React.FC<ProductSelectionProps> = ({
   };
 
   const handleSaveProducts = () => {
-    onProductsChange(tempSelectedProducts);
+    updateSelectedProducts(tempSelectedProducts);
     setIsModalOpen(false);
     setCurrentPage(1);
     setSearchProduct('');
   };
 
-  const handleSelectionTypeChange = (type: 'selected' | 'all') => {
-    setSelectionType(type);
-    if (type === 'all') {
-      onProductsChange(products.map(p => p.id));
-    } else {
-      onProductsChange([]);
-    }
-  };
-
-  useEffect(() => {
+  const handleOpenModal = () => {
     setTempSelectedProducts(selectedProducts);
-  }, [selectedProducts]);
+    setIsModalOpen(true);
+  };
 
   const mainPageProducts = products.filter(p => selectedProducts.includes(p.id))
     .slice((currentPage - 1) * productsPerPage, currentPage * productsPerPage);
@@ -76,9 +101,10 @@ const ProductSelection: React.FC<ProductSelectionProps> = ({
     product.name.toLowerCase().includes(searchProduct.toLowerCase())
   );
 
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg  mb-2">Product</h2>
+      <h2 className="text-lg mb-2">Product</h2>
       <div className="flex items-center space-x-2 mt-4">
         <input
           type="checkbox"
@@ -95,36 +121,36 @@ const ProductSelection: React.FC<ProductSelectionProps> = ({
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <button
-          className={`p-4 rounded-lg text-center  ${selectionType === 'selected'
-              ? 'bg-blue-50 border-2 border-blue-500'
-              : 'border border-gray-300'
-            }`}
-          onClick={() => handleSelectionTypeChange('selected')}
-        >
-          <h3 className={`font-semibold mb-4 ${selectionType === 'selected' ? 'text-blue-600' : 'text-[#626E7F]'
-            }`}>Selected Products</h3>
-          <p className="text-sm text-[#626E7F] ">Select particular products to add on our campaign</p>
-        </button>
-        <button
-          className={`p-4 rounded-lg text-center ${selectionType === 'all'
-              ? 'bg-blue-50 border-2 border-blue-500'
-              : 'border border-gray-300'
-            }`}
+          className={`p-4 rounded-lg text-center ${productSelectionType === 'all'
+            ? 'bg-blue-50 border-2 border-blue-500'
+            : 'border border-gray-300'
+          }`}
           onClick={() => handleSelectionTypeChange('all')}
         >
-          <h3 className={`font-semibold mb-4 ${selectionType === 'all' ? 'text-blue-600' : 'text-[#626E7F]'
+          <h3 className={`font-semibold mb-4 ${productSelectionType === 'all' ? 'text-blue-600' : 'text-[#626E7F]'
             }`}>All Products</h3>
-          <p className="text-sm text-[#626E7F] ">Add all products to your campaign</p>
+          <p className="text-sm text-[#626E7F]">Add all products to your campaign</p>
+        </button>
+        <button
+          className={`p-4 rounded-lg text-center ${productSelectionType === 'selected'
+            ? 'bg-blue-50 border-2 border-blue-500'
+            : 'border border-gray-300'
+          }`}
+          onClick={() => handleSelectionTypeChange('selected')}
+        >
+          <h3 className={`font-semibold mb-4 ${productSelectionType === 'selected' ? 'text-blue-600' : 'text-[#626E7F]'
+            }`}>Selected Products</h3>
+          <p className="text-sm text-[#626E7F]">Select particular products to add to our campaign</p>
         </button>
       </div>
       <div className="h-8"></div>
-      {selectionType === 'selected' && (
+      {productSelectionType === 'selected' && (
         <div className="bg-white shadow-md shadow-gray-300 border rounded-lg p-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg">Selected Products</h3>
             <button
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenModal}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -190,7 +216,7 @@ const ProductSelection: React.FC<ProductSelectionProps> = ({
         </div>
       )}
 
-      {selectionType === 'all' && (
+      {productSelectionType === 'all' && (
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-600">All products have been selected for this campaign.</p>
         </div>
