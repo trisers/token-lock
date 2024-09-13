@@ -1,107 +1,165 @@
-"use client";
-
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export interface Campaign {
-  title: string;
-  products: string;
-  eligibleAccounts: string;
-  start: string;
-  end: string;
-  status: 'active' | 'Deactivated';
-  isDiscount?: boolean;
-  isOff?: boolean;
+  id: number;
+  campaignName: string;
+  campaignType: string;
+  discountType: string;
+  discountValue: string | null;
+  offerHeading: string;
+  offerDescription: string;
+  startDate: string;
+  endDate: string;
+  autoActivate: number;
+  eligibilityConditions: any[] | null;
+  selectedProducts: number[] | 'all' | null;
+  campaignStatus: number;
 }
 
-interface CampaignCardProps extends Campaign { }
+interface CampaignCardProps {
+  campaign: Campaign;
+}
 
-const CampaignCard: React.FC<CampaignCardProps> = ({
-  title,
-  products,
-  eligibleAccounts,
-  start,
-  end,
-  status: initialStatus,
-  isDiscount = true,
-  isOff = true
-}) => {
-  const [status, setStatus] = useState(initialStatus);
+const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
+  const router = useRouter();
+  const [status, setStatus] = useState<'Active' | 'Deactivated'>(
+    campaign.campaignStatus === 1 ? 'Active' : 'Deactivated'
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
-  const toggleStatus = () => {
-    setStatus(prevStatus => prevStatus === 'active' ? 'Deactivated' : 'active');
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const handleEditCampaign = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaign data');
+      }
+      const campaignData = await response.json();
+      router.push(`/editCampaign/${campaign.id}`);
+    } catch (error) {
+      console.error('Error fetching campaign data:', error);
+      alert('Failed to load campaign data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleActivateDeactivate = async () => {
+    const newStatus = status === 'Active' ? 0 : 1;
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignStatus: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update campaign status');
+      }
+
+      setStatus(newStatus === 1 ? 'Active' : 'Deactivated');
+      console.log(`Campaign ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Error updating campaign status:', error);
+      alert('Failed to update campaign status. Please try again.');
+    }
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between h-full">
+    <div className="bg-white shadow-md border rounded-lg p-4 flex flex-col justify-between h-full">
       <div>
-        <div className="flex  items-center mb-[37px]">
-          <h2 className="text-xl font-semibold">{title}</h2>
+        <div className="flex items-center mb-[37px]">
+          <h2 className="text-xl font-semibold">{campaign.campaignName}</h2>
+
           <div className="flex flex-wrap gap-4 ml-4">
-            {isDiscount && (
-              <span className="bg-[#FFF2EF] border-[#BE1202] border-solid border-[1.5px] text-red-700 text-xs  px-2.5 py-0.5 rounded-full">
-                % Discount
-              </span>
-            )}
-            {isOff && (
-              <span className="bg-[#FFF2EF] border-[#043AFF] border-solid border-[1.5px] text-[#043AFF] text-xs  px-2.5 py-0.5 rounded-full">
-                Rs. 8 Off
+            <span className="bg-blue-150 border-blue-500 border-solid border-[1.5px] text-blue-700 text-xs px-2.5 py-0.5 rounded-full">
+              {campaign.campaignType}
+            </span>
+            {campaign.campaignType === 'discount' && campaign.discountValue && (
+              <span className="bg-[#FFF2EF] border-[#BE1202] border-solid border-[1.5px] text-red-700 text-xs px-2.5 py-0.5 rounded-full">
+                {campaign.discountType === 'percentage' ? `${campaign.discountValue}% Discount` : `Rs. ${campaign.discountValue} Off`}
               </span>
             )}
             <span
-              className={`border-[#007D35] border-solid border-[1.5px] text-xs px-2.5 py-0.5 rounded-full ${status === 'active'
+              className={`border-[#007D35] border-solid border-[1.5px] text-xs px-2.5 py-0.5 rounded-full ${
+                status === 'Active'
                   ? 'bg-[#FEFEF7] text-[#007D35]'
                   : 'bg-[#FEFEF7] text-[#007D35]'
-                }`}
+              }`}
             >
-              {status === 'active' ? 'Active' : 'Idle'}
+              {status}
             </span>
           </div>
         </div>
-        <div className="space-y-9 text-sm">
+
+        <div className="space-y-6 text-sm">
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Product</span>
             <br />
-            {products}
+            {campaign.selectedProducts === 'all' || (Array.isArray(campaign.selectedProducts) && campaign.selectedProducts.length === 0)
+              ? 'All products'
+              : `${campaign.selectedProducts?.length || 0} products selected`}
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Eligible Accounts</span>
             <br />
-            {eligibleAccounts}
+            {campaign.eligibilityConditions ? `${campaign.eligibilityConditions.length} condition(s) set` : 'No conditions set'}
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Start</span>
             <br />
-            {start}
+            {formatDate(campaign.startDate)}
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>End</span>
             <br />
-            {end}
+            {formatDate(campaign.endDate)}
           </p>
         </div>
       </div>
       <div className="mt-[48px] flex justify-between items-center mb-4">
-        <button className="bg-blue-500 text-white px-4 py-2 w-28 rounded hover:bg-blue-600 transition-colors">
-          Edit
+        <button
+          type="button"
+          className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors ${
+            isLoading ? 'opacity-70 cursor-not-allowed' : ''
+          } flex items-center justify-center w-32`}
+          onClick={handleEditCampaign}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : null}
+          {isLoading ? 'Processing' : 'Edit'}
         </button>
         <div className="text-sm">
-          {/* <span className={status === 'active' ? 'text-green-500' : 'text-red-500'}> */}
           <span>
             This campaign is {status}
           </span>
           <button
-            onClick={toggleStatus}
-            className={`ml-2 ${status === 'active'
+            onClick={handleActivateDeactivate}
+            className={`ml-2 ${
+              status === 'Active'
                 ? 'text-red-500 hover:text-red-600'
                 : 'text-green-500 hover:text-green-600'
-              } transition-colors`}
+            } transition-colors`}
           >
-            Click to {status === 'active' ? 'Deactivate' : 'Activate'}
+            Click to {status === 'Active' ? 'Deactivate' : 'Activate'}
           </button>
         </div>
       </div>
     </div>
   );
 };
-
 export default CampaignCard;
