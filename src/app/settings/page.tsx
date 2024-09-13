@@ -1,5 +1,8 @@
 "use client";
+
 import React, { useState, useEffect, useRef } from "react";
+import InputField from "../components/InputField";
+import SettingsPageSkeleton from "./SettingsPageSkeleton";
 
 interface ButtonSettings {
     color: string;
@@ -12,6 +15,31 @@ interface DescriptionSettings {
     color: string;
     fontSize: number;
 }
+
+interface Settings {
+    id?: number;
+    button_color: string;
+    button_text: string;
+    button_text_color: string;
+    button_font_size: number;
+    description_color: string;
+    description_font_size: number;
+}
+
+interface ToastProps {
+    message: string;
+    type: 'success' | 'error';
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type }) => {
+    return (
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center">
+            <div className={`px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+                {message}
+            </div>
+        </div>
+    );
+};
 
 const SettingsPage: React.FC = () => {
     const [buttonSettings, setButtonSettings] = useState<ButtonSettings>({
@@ -27,10 +55,17 @@ const SettingsPage: React.FC = () => {
     });
 
     const [isChanged, setIsChanged] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [toast, setToast] = useState<ToastProps | null>(null);
+
     const initialSettings = useRef({
         buttonSettings: { ...buttonSettings },
         descriptionSettings: { ...descriptionSettings },
     });
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
 
     useEffect(() => {
         const settingsChanged =
@@ -39,13 +74,92 @@ const SettingsPage: React.FC = () => {
         setIsChanged(settingsChanged);
     }, [buttonSettings, descriptionSettings]);
 
-    const handleSaveSettings = (): void => {
-        console.log("Settings saved:", { buttonSettings, descriptionSettings });
-        initialSettings.current = {
-            buttonSettings: { ...buttonSettings },
-            descriptionSettings: { ...descriptionSettings },
-        };
-        setIsChanged(false);
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => {
+                setToast(null);
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
+
+    const fetchSettings = async () => {
+        try {
+            const response = await fetch('/api/settings');
+            if (response.ok) {
+                const data: Settings = await response.json();
+                setButtonSettings({
+                    color: data.button_color,
+                    text: data.button_text,
+                    textColor: data.button_text_color,
+                    fontSize: data.button_font_size,
+                });
+                setDescriptionSettings({
+                    color: data.description_color,
+                    fontSize: data.description_font_size,
+                });
+                initialSettings.current = {
+                    buttonSettings: {
+                        color: data.button_color,
+                        text: data.button_text,
+                        textColor: data.button_text_color,
+                        fontSize: data.button_font_size,
+                    },
+                    descriptionSettings: {
+                        color: data.description_color,
+                        fontSize: data.description_font_size,
+                    },
+                };
+            } else if (response.status === 404) {
+                console.log('No settings found. Using default values.');
+            } else {
+                console.error('Failed to fetch settings');
+                setToast({ message: 'Failed to load settings. Using default values.', type: 'error' });
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            setToast({ message: 'Error loading settings. Using default values.', type: 'error' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSaveSettings = async (): Promise<void> => {
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    buttonColor: buttonSettings.color,
+                    buttonText: buttonSettings.text,
+                    buttonTextColor: buttonSettings.textColor,
+                    buttonFontSize: buttonSettings.fontSize,
+                    descriptionColor: descriptionSettings.color,
+                    descriptionFontSize: descriptionSettings.fontSize,
+                }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Settings saved successfully:', result);
+                setToast({ message: 'Settings saved successfully!', type: 'success' });
+                initialSettings.current = {
+                    buttonSettings: { ...buttonSettings },
+                    descriptionSettings: { ...descriptionSettings },
+                };
+                setIsChanged(false);
+            } else {
+                const errorData = await response.json();
+                console.error('Failed to save settings:', errorData);
+                setToast({ message: 'Failed to save settings. Please try again.', type: 'error' });
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            setToast({ message: 'Error saving settings. Please try again.', type: 'error' });
+        }
     };
 
     const handleButtonSettingsChange = (e: React.ChangeEvent<HTMLInputElement>, key: keyof ButtonSettings) => {
@@ -62,72 +176,55 @@ const SettingsPage: React.FC = () => {
         }));
     };
 
+    if (isLoading) {
+        return <SettingsPageSkeleton />;
+    }
+
     return (
         <div className="p-8 bg-gray-100 min-h-screen">
             <h1 className="text-2xl font-bold mb-6">Settings</h1>
+            {toast && <Toast message={toast.message} type={toast.type} />}
             <div className="flex space-x-8">
                 {/* Settings section */}
                 <div className="w-1/3 bg-white p-4 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Settings for button</h2>
                     <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <span>Button color</span>
-                            <input
-                                type="text"
-                                value={buttonSettings.color}
-                                onChange={(e) => handleButtonSettingsChange(e, "color")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span>Button text</span>
-                            <input
-                                type="text"
-                                value={buttonSettings.text}
-                                onChange={(e) => handleButtonSettingsChange(e, "text")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span>Button text color</span>
-                            <input
-                                type="text"
-                                value={buttonSettings.textColor}
-                                onChange={(e) => handleButtonSettingsChange(e, "textColor")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span>Font Size(px)</span>
-                            <input
-                                type="number"
-                                value={buttonSettings.fontSize}
-                                onChange={(e) => handleButtonSettingsChange(e, "fontSize")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
+                        <InputField
+                            label="Button color"
+                            value={buttonSettings.color}
+                            onChange={(e) => handleButtonSettingsChange(e, "color")}
+                        />
+                        <InputField
+                            label="Button text"
+                            value={buttonSettings.text}
+                            onChange={(e) => handleButtonSettingsChange(e, "text")}
+                        />
+                        <InputField
+                            label="Button text color"
+                            value={buttonSettings.textColor}
+                            onChange={(e) => handleButtonSettingsChange(e, "textColor")}
+                        />
+                        <InputField
+                            label="Font Size(px)"
+                            value={buttonSettings.fontSize}
+                            onChange={(e) => handleButtonSettingsChange(e, "fontSize")}
+                            type="number"
+                        />
                     </div>
 
                     <h2 className="text-xl font-semibold mt-4 mb-4">Descriptions settings</h2>
                     <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <span>Set color</span>
-                            <input
-                                type="text"
-                                value={descriptionSettings.color}
-                                onChange={(e) => handleDescriptionSettingsChange(e, "color")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span>Font Size(px)</span>
-                            <input
-                                type="number"
-                                value={descriptionSettings.fontSize}
-                                onChange={(e) => handleDescriptionSettingsChange(e, "fontSize")}
-                                className="border p-1 rounded w-1/2 text-sm"
-                            />
-                        </div>
+                        <InputField
+                            label="Set color"
+                            value={descriptionSettings.color}
+                            onChange={(e) => handleDescriptionSettingsChange(e, "color")}
+                        />
+                        <InputField
+                            label="Font Size(px)"
+                            value={descriptionSettings.fontSize}
+                            onChange={(e) => handleDescriptionSettingsChange(e, "fontSize")}
+                            type="number"
+                        />
                     </div>
 
                     <div className="flex justify-end mt-4">
@@ -172,7 +269,6 @@ const SettingsPage: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-
                         <div className="w-2/3 bg-white-50 px-5 flex-1 flex flex-col justify-between p-3">
                             <div className="text-center">
                                 <h3 className="text-lg font-bold mb-2">PRODUCT NAME</h3>
@@ -195,8 +291,6 @@ const SettingsPage: React.FC = () => {
                                 </div>
                                 <div className="w-full border-b border-gray-300 mt-2"></div>
                             </div>
-
-
                             <div className="flex flex-col items-center">
                                 <button className="w-full bg-white border border-gray-300 text-gray-800 py-3 rounded text-sm mb-2">
                                     Add To Cart
