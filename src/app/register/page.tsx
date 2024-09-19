@@ -8,6 +8,7 @@ import Image from 'next/image';
 import logolock from "../assets/logolock.png";
 import loginlockbckg from "../assets/loginlockbckg.jpg";
 import Toast from '../components/Toast';
+import { Loader2 } from 'lucide-react';
 
 
 const RegisterPage: React.FC = () => {
@@ -18,10 +19,13 @@ const RegisterPage: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -46,6 +50,8 @@ const RegisterPage: React.FC = () => {
       setToastMessage('An error occurred during Registration');
       setToastType('error');
       setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -74,7 +80,7 @@ const RegisterPage: React.FC = () => {
               <h2 className="mt-2  mb-2 text-center text-3xl font-medium text-gray-900">
                 Create your account
               </h2>
-              <p className="text-gray-600 text-center mb-6">Fill in your details to Register</p>
+              <p className="text-gray-600 text-center mb-6 text-sm">Fill in your details to Register</p>
 
             </div>
             <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
@@ -85,7 +91,7 @@ const RegisterPage: React.FC = () => {
                     name="username"
                     type="text"
                     required
-                    placeholder="username"
+                    placeholder="Username"
                     className="w-full p-3 border-b border-gray-300 focus:border-blue-600 focus:outline-none bg-transparent"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -119,15 +125,26 @@ const RegisterPage: React.FC = () => {
                 </div>
               </div>
               <div>
+
                 <button
                   type="submit"
-                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className='w-full bg-blue-600 text-white p-3 rounded font-medium hover:bg-blue-700 transition duration-200 flex items-center justify-center'
+                  // className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={isLoading}
                 >
-                  Register
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {/* Logging in... */}
+                    </>
+                  ) : (
+                    "Register"
+                  )}
+
                 </button>
               </div>
             </form>
-            <div className="text-center mt-5">
+            <div className="text-center mt-5 text-sm">
               Already have an account?
               <Link href="/login" className="text-blue-600 ml-1 hover:underline">
                 Sign in

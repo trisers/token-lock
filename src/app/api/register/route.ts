@@ -1,7 +1,6 @@
-// src/app/api/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../config/dbconfig';
-import { OkPacket } from 'mysql2';
+import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import bcrypt from 'bcrypt';
 
 export async function POST(req: NextRequest) {
@@ -14,22 +13,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     const connection = await pool.getConnection();
     try {
-      const [result] = await connection.execute<OkPacket>(
-        `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
+      // Check if username or email already exists
+      const [existingUsers] = await connection.execute<RowDataPacket[]>(
+        'SELECT username, email FROM users WHERE username = ? OR email = ?',
+        [username, email]
+      );
+
+      if (existingUsers.length > 0) {
+        const existingUser = existingUsers[0];
+        if (existingUser.username === username) {
+          return NextResponse.json({ message: 'Username already exists' }, { status: 409 });
+        } else if (existingUser.email === email) {
+          return NextResponse.json({ message: 'Email already exists' }, { status: 409 });
+        }
+      }
+
+      // If no existing user, proceed with registration
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const [result] = await connection.execute<ResultSetHeader>(
+        'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
         [username, email, hashedPassword]
       );
 
-      if ('insertId' in result) {
-        return NextResponse.json({ message: 'User registered successfully', id: result.insertId }, { status: 201 });
-      } else {
-        throw new Error('Failed to get insertId from query result');
-      }
+      return NextResponse.json({ message: 'User registered successfully', id: result.insertId }, { status: 201 });
     } finally {
       connection.release();
     }
