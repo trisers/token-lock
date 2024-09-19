@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import CampaignBasicInfo from '../components/createCampaign/CampaignBasicInfo';
-import CampaignTypeSelector from '../components/createCampaign/CampaignTypeSelector';
-import DiscountSection from '../components/createCampaign/DiscountSection';
-import OfferDetails from '../components/createCampaign/OfferDetails';
-import DateRange from '../components/createCampaign/DateRange';
-import ProductSelection from '../components/createCampaign/ProductSelection';
-import EligibilityConditions from '../components/createCampaign/EligibilityConditions';
+import CampaignBasicInfo from '../../components/createCampaign/CampaignBasicInfo';
+import CampaignTypeSelector from '../../components/createCampaign/CampaignTypeSelector';
+import DiscountSection from '../../components/createCampaign/DiscountSection';
+import OfferDetails from '../../components/createCampaign/OfferDetails';
+import DateRange from '../../components/createCampaign/DateRange';
+import ProductSelection from '../../components/createCampaign/ProductSelection';
+import EligibilityConditions from '../../components/createCampaign/EligibilityConditions';
 
 const CreateCampaignPage: React.FC = () => {
   const router = useRouter();
@@ -32,7 +32,7 @@ const CreateCampaignPage: React.FC = () => {
 
   useEffect(() => {
     // Validate form
-    const isValid: boolean = 
+    const isValid: boolean =
       formData.campaignName.trim() !== '' &&
       formData.offerHeading.trim() !== '' &&
       formData.offerDescription.trim() !== '' &&
@@ -65,22 +65,6 @@ const CreateCampaignPage: React.FC = () => {
     });
   };
 
-  // const handleProductSelectionChange = (selectedProducts: number[]) => {
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     selectedProducts,
-  //   }));
-  // };
-  
-
-  // const handleProductSelectionTypeChange = (selectionType: 'all' | 'selected') => {
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     productSelectionType: selectionType,
-  //     selectedProducts: selectionType === 'all' ? [] : prevData.selectedProducts,
-  //   }));
-  // };
-
 
   const handleProductSelectionChange = (selectedProducts: number[]) => {
     setFormData((prevData) => ({
@@ -98,7 +82,6 @@ const CreateCampaignPage: React.FC = () => {
       selectedProducts: selectionType === 'all' ? [] : prevData.selectedProducts,
     }));
   };
-  
 
   const handleSave = async () => {
     if (!isFormValid) {
@@ -196,9 +179,8 @@ const CreateCampaignPage: React.FC = () => {
             Cancel
           </button>
           <button
-            className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ${
-              isFormValid ? '' : 'opacity-50 cursor-not-allowed'
-            }`}
+            className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ${isFormValid ? '' : 'opacity-50 cursor-not-allowed'
+              }`}
             onClick={handleSave}
             disabled={!isFormValid}
           >

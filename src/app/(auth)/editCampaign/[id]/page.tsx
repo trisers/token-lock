@@ -3,15 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
-import CampaignBasicInfo from '../../components/createCampaign/CampaignBasicInfo';
-import CampaignTypeSelector from '../../components/createCampaign/CampaignTypeSelector';
-import DiscountSection from '../../components/createCampaign/DiscountSection';
-import OfferDetails from '../../components/createCampaign/OfferDetails';
-import DateRange from '../../components/createCampaign/DateRange';
-import ProductSelection from '../../components/createCampaign/ProductSelection';
-import EligibilityConditions from '../../components/createCampaign/EligibilityConditions';
+import CampaignBasicInfo from '../../../components/createCampaign/CampaignBasicInfo';
+import CampaignTypeSelector from '../../../components/createCampaign/CampaignTypeSelector';
+import DiscountSection from '../../../components/createCampaign/DiscountSection';
+import OfferDetails from '../../../components/createCampaign/OfferDetails';
+import DateRange from '../../../components/createCampaign/DateRange';
+import ProductSelection from '../../../components/createCampaign/ProductSelection';
+import EligibilityConditions from '../../../components/createCampaign/EligibilityConditions';
 
 const EditCampaignPage: React.FC = () => {
+
     const router = useRouter();
     const params = useParams();
     const campaignId = params.id as string;
@@ -54,7 +55,7 @@ const EditCampaignPage: React.FC = () => {
             }
 
             const campaignData = await response.json();
-            
+
             // Convert date strings to the format expected by input[type="date"]
             const startDate = new Date(campaignData.startDate).toISOString().split('T')[0];
             const endDate = new Date(campaignData.endDate).toISOString().split('T')[0];
@@ -117,10 +118,10 @@ const EditCampaignPage: React.FC = () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to update campaign');
             }
-
+            
             const result = await response.json();
             console.log('Campaign updated successfully:', result);
-            router.push('/');
+            router.push('/dashboard');
         } catch (error) {
             console.error('Error updating campaign:', error);
             alert(`Failed to update campaign: ${error}`);
@@ -218,14 +219,14 @@ const EditCampaignPage: React.FC = () => {
                     onEndDateChange={(value) => handleInputChange('endDate', value)}
                 />
 
-<ProductSelection
-                autoActivate={formData.autoActivate}
-                onAutoActivateChange={(value) => handleInputChange('autoActivate', value)}
-                onProductsChange={(value) => handleInputChange('selectedProducts', value)}
-                initialSelectedProducts={formData.selectedProducts}
-                initialProductSelectionType={formData.productSelectionType}
-                onProductSelectionTypeChange={handleProductSelectionTypeChange}
-            />
+                <ProductSelection
+                    autoActivate={formData.autoActivate}
+                    onAutoActivateChange={(value) => handleInputChange('autoActivate', value)}
+                    onProductsChange={(value) => handleInputChange('selectedProducts', value)}
+                    initialSelectedProducts={formData.selectedProducts}
+                    initialProductSelectionType={formData.productSelectionType}
+                    onProductSelectionTypeChange={handleProductSelectionTypeChange}
+                />
 
 
                 <EligibilityConditions
@@ -245,18 +246,16 @@ const EditCampaignPage: React.FC = () => {
 
                     <div className="flex justify-end space-x-4 ">
                         <button
-                            className={`px-2 py-2 border-gray-300 rounded-md ${
-                                formData.campaignStatus === 1 ? 'text-red-500 hover:bg-red-100' : 'text-green-500 hover:bg-green-100'
-                            }`}
+                            className={`px-2 py-2 border-gray-300 rounded-md ${formData.campaignStatus === 1 ? 'text-red-500 hover:bg-red-100' : 'text-green-500 hover:bg-green-100'
+                                }`}
                             onClick={handleActivateDeactivate}
                         >
                             {formData.campaignStatus === 1 ? 'Deactivate' : 'Activate'}
                         </button>
 
                         <button
-                            className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ${
-                                isFormValid ? '' : 'opacity-50 cursor-not-allowed'
-                            }`}
+                            className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ${isFormValid ? '' : 'opacity-50 cursor-not-allowed'
+                                }`}
                             onClick={handleUpdate}
                             disabled={!isFormValid}
                         >
