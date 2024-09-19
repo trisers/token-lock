@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../config/dbconfig';
-import { OkPacket, RowDataPacket } from 'mysql2';
+import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 export async function POST(req: NextRequest) {
   try {
+
     const campaignData = await req.json();
-    // Validate and sanitize input
+    
     const {
       campaignName,
       campaignType,
@@ -20,32 +21,21 @@ export async function POST(req: NextRequest) {
       selectedProducts,
       productSelectionType,
       evaluateCondition,
-      campaignStatus // Add this line
+      campaignStatus
     } = campaignData;
 
-    // Check for required fields
     if (!campaignName || !campaignType || !offerHeading || !offerDescription || !startDate || !endDate || !productSelectionType || !evaluateCondition) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
     const connection = await pool.getConnection();
+
     try {
-      const [result] = await connection.execute<OkPacket>(
+      const [result] = await connection.execute<ResultSetHeader>(
         `INSERT INTO campaigns (
-          campaignName,
-          campaignType,
-          discountType,
-          discountValue,
-          offerHeading,
-          offerDescription,
-          startDate,
-          endDate,
-          autoActivate,
-          eligibilityConditions,
-          selectedProducts,
-          productSelectionType,
-          evaluateCondition,
-          campaignStatus
+          campaignName, campaignType, discountType, discountValue, offerHeading,
+          offerDescription, startDate, endDate, autoActivate, eligibilityConditions,
+          selectedProducts, productSelectionType, evaluateCondition, campaignStatus
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           campaignName,
@@ -61,15 +51,11 @@ export async function POST(req: NextRequest) {
           selectedProducts ? JSON.stringify(selectedProducts) : null,
           productSelectionType,
           evaluateCondition,
-          campaignStatus || 1 // Add this line, default to 1 (active) if not provided
+          campaignStatus || 1
         ]
       );
 
-      if ('insertId' in result) {
-        return NextResponse.json({ message: 'Campaign created successfully', id: result.insertId }, { status: 201 });
-      } else {
-        throw new Error('Failed to get insertId from query result');
-      }
+      return NextResponse.json({ message: 'Campaign created successfully', id: result.insertId }, { status: 201 });
     } finally {
       connection.release();
     }
@@ -83,7 +69,6 @@ export async function GET(req: NextRequest) {
   try {
     const connection = await pool.getConnection();
     try {
-      // Return campaigns in descending order based on created_at
       const [rows] = await connection.query<RowDataPacket[]>(
         `SELECT * FROM campaigns ORDER BY created_at DESC`
       );

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import InputField from "../components/InputField";
+import InputField from "../../components/InputField";
 import SettingsPageSkeleton from "./SettingsPageSkeleton";
 
 interface ButtonSettings {
@@ -42,6 +42,7 @@ const Toast: React.FC<ToastProps> = ({ message, type }) => {
 };
 
 const SettingsPage: React.FC = () => {
+    
     const [buttonSettings, setButtonSettings] = useState<ButtonSettings>({
         color: "#2D2D2D",
         text: "Connect Tokenlock",

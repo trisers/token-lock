@@ -1,35 +1,36 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
+// import "./globals.css";
+// import { ReactNode } from "react";
+
+// const inter = Inter({ subsets: ["latin"] });
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: ReactNode;
+// }) {
+//   return (
+//     <html lang="en">
+//       <body className={inter.className}>{children}</body>
+//     </html>
+//   );
+// }
+
+
+// src/app/layout.tsx
+
+// import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import { SidebarProvider } from "./contexts/SidebarContext";
+import  RouteGuard  from '../app/components/RouteGuard';
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Token Lock",
-  description: "Token Lock",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <SidebarProvider>
-          <div className="flex h-screen">
-            <Sidebar />
-            <div className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 overflow-auto p-4">{children}</main>
-            </div>
-          </div>
-        </SidebarProvider>
+      <body>
+        <RouteGuard>{children}</RouteGuard>
       </body>
     </html>
   );
