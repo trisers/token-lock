@@ -19,26 +19,24 @@ const ForgotPasswordPage: React.FC = () => {
             style={{ backgroundImage: `url(${loginlockbckg.src})` }}
           >
             <div>
-              <Image src={logolock} alt="TokenLock Logo" width={50} height={50}  />
+              <Image src={logolock} alt="TokenLock Logo" width={50} height={50} />
               <Image src={forgotImg} alt="Forgot Password" />
             </div>
           </div>
 
           {/* Right side - Reset Password form */}
           <div className="w-1/2 p-12 bg-[#E5EBFF] justify-center">
-            <h2 className="text-2xl font-bold text-gray-900 mt-5 text-center">
+            <h2 className="mt-2  mb-2 text-center text-3xl font-medium text-gray-900">
               Reset your password!
             </h2>
-            <p className="text-gray-600 mb-10 text-center text-sm mt-3"> 
-              Fill in your details to Register
-            </p>
+            <p className="text-gray-600 text-center mb-6 text-sm">Enter your email to reset password</p>
 
             <ForgotPasswordForm />
 
-            <div className="mt-6 text-center">
-               Already have an account? 
-              <Link href="/login" className="font-medium ml-2 text-blue-600 hover:underline">
-               Login
+            <div className="mt-6 text-center text-sm">
+              Back to login?{' '}
+              <Link href="/login" className="font-medium text-blue-600 hover:underline">
+                Login
               </Link>
             </div>
           </div>
