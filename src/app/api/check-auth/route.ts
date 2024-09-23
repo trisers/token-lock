@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    jwt.verify(token, JWT_SECRET);
-    return NextResponse.json({ message: 'Authenticated' }, { status: 200 });
+    const decoded = jwt.verify(token, JWT_SECRET) as { username?: string };
+    return NextResponse.json({ 
+      message: 'Authenticated', 
+      username: decoded.username || 'User'
+    }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
   }
