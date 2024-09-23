@@ -141,7 +141,7 @@ const EditCampaignPage: React.FC = () => {
                 }
 
                 console.log('Campaign deleted successfully');
-                router.push('/');
+                router.push('/dashboard');
             } catch (error) {
                 console.error('Error deleting campaign:', error);
                 alert('Failed to delete campaign. Please try again.');
