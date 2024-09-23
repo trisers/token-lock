@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
     { icon: Home, name: 'Dashboard', href: '/dashboard' },
     { icon: BarChart2, name: 'Campaigns', href: '/campaign' },
     { icon: Settings, name: 'Settings', href: '/settings' },
-    { icon: HelpCircle, name: 'How to use', href: '/help' },
+    { icon: HelpCircle, name: 'How to use', href: '/howtouse' },
   ];
 
   return (

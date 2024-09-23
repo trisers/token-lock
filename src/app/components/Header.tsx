@@ -40,7 +40,7 @@ const Header: React.FC = () => {
           {pathname === '/dashboard' ? 'Dashboard' :
            pathname === '/campaign' ? 'Campaigns' :
            pathname === '/settings' ? 'Settings' :
-           pathname === '/help' ? 'How to use' :
+           pathname === '/howtouse' ? 'How to use' :
            'Token Lock'}
         </h1>
       </div>
