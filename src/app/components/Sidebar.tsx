@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, BarChart2, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Home, BarChart2, Settings, HelpCircle, LogOut, History, FileSpreadsheet } from 'lucide-react';
 import { useSidebar } from '../contexts/SidebarContext';
+
 
 const Sidebar: React.FC = () => {
 
@@ -37,7 +38,11 @@ const Sidebar: React.FC = () => {
     { icon: BarChart2, name: 'Campaigns', href: '/campaign' },
     { icon: Settings, name: 'Settings', href: '/settings' },
     { icon: HelpCircle, name: 'How to use', href: '/howtouse' },
+    { icon: History, name: 'Purchase History', href: '/purchaseHistory' },
+    { icon: FileSpreadsheet, name: 'Purchase Limit', href: '/purchaseLimit' },
+
   ];
+
 
   return (
     <div className={`flex flex-col bg-white text-gray-800 transition-all duration-300 ${isOpen ? 'w-64' : 'w-16'} border-r`}>
