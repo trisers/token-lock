@@ -38,7 +38,7 @@ const Sidebar: React.FC = () => {
     { icon: BarChart2, name: 'Campaigns', href: '/campaign' },
     { icon: Settings, name: 'Settings', href: '/settings' },
     { icon: HelpCircle, name: 'How to use', href: '/howtouse' },
-    { icon: History, name: 'Purchase History', href: '/purchaseHistory' },
+    { icon: History, name: 'Purchase History', href: '/PurchaseHistory' },
     { icon: FileSpreadsheet, name: 'Purchase Limit', href: '/purchaseLimit' },
 
   ];
@@ -59,7 +59,7 @@ const Sidebar: React.FC = () => {
             <li key={index}>
               <Link
                 href={item.href}
-                className={`flex items-center p-4 hover:bg-gray-100 hover:text-black ${
+                className={`flex items-center p-4 hover:bg-blue-600 hover:text-white ${
                   isOpen ? 'justify-start space-x-4' : 'justify-center'
                 } ${pathname === item.href ? 'bg-blue-600 text-white' : ''}`}
               >

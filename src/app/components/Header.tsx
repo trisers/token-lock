@@ -42,6 +42,7 @@ const Header: React.FC = () => {
            pathname === '/settings' ? 'Settings' :
            pathname === '/howtouse' ? 'How to use' :
            pathname === '/purchaseLimit' ? 'Purchase Limit' :
+           pathname === '/PurchaseHistory' ? 'Purchase History' :
            'Token Lock'}
         </h1>
       </div>
