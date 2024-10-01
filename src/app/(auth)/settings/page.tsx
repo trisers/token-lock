@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import InputField from "../../components/InputField";
 import SettingsPageSkeleton from "./SettingsPageSkeleton";
+import ColorInput from "../../components/ColorInput";
+import { Loader2 } from "lucide-react";
 
 interface ButtonSettings {
     color: string;
@@ -42,7 +44,9 @@ const Toast: React.FC<ToastProps> = ({ message, type }) => {
 };
 
 const SettingsPage: React.FC = () => {
-    
+
+    const [isSaving, setIsSaving] = useState(false);
+
     const [buttonSettings, setButtonSettings] = useState<ButtonSettings>({
         color: "#2D2D2D",
         text: "Connect Tokenlock",
@@ -127,6 +131,7 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleSaveSettings = async (): Promise<void> => {
+        setIsSaving(true); // Start saving
         try {
             const response = await fetch('/api/settings', {
                 method: 'POST',
@@ -160,6 +165,8 @@ const SettingsPage: React.FC = () => {
         } catch (error) {
             console.error('Error saving settings:', error);
             setToast({ message: 'Error saving settings. Please try again.', type: 'error' });
+        } finally {
+            setIsSaving(false); // End saving
         }
     };
 
@@ -183,65 +190,78 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="p-8 bg-gray-100 min-h-screen">
-            <h1 className="text-2xl font-bold mb-6">Settings</h1>
+            <h1 className="text-2xl font-medium mb-6">Settings</h1>
             {toast && <Toast message={toast.message} type={toast.type} />}
             <div className="flex space-x-8">
                 {/* Settings section */}
-                <div className="w-1/3 bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-xl font-semibold mb-4">Settings for button</h2>
-                    <div className="space-y-6">
-                        <InputField
+                <div className="w-1/2 bg-white p-4 rounded-lg shadow">
+                    <h2 className="text-lg font-medium mb-4">Settings for button</h2>
+                    <div className="space-y-4">
+                        <ColorInput
                             label="Button color"
                             value={buttonSettings.color}
-                            onChange={(e) => handleButtonSettingsChange(e, "color")}
+                            onChange={(value) => handleButtonSettingsChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>, "color")}
                         />
-                        <InputField
-                            label="Button text"
-                            value={buttonSettings.text}
-                            onChange={(e) => handleButtonSettingsChange(e, "text")}
-                        />
-                        <InputField
+                        <div className="flex items-center space-x-4">
+                            <label className="font-medium text-md text-gray-700 w-1/3">Button text</label>
+                            <input
+                                type="text"
+                                value={buttonSettings.text}
+                                onChange={(e) => handleButtonSettingsChange(e, "text")}
+                                className="flex-grow px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                            />
+                        </div>
+                        <ColorInput
                             label="Button text color"
                             value={buttonSettings.textColor}
-                            onChange={(e) => handleButtonSettingsChange(e, "textColor")}
+                            onChange={(value) => handleButtonSettingsChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>, "textColor")}
                         />
-                        <InputField
-                            label="Font Size(px)"
-                            value={buttonSettings.fontSize}
-                            onChange={(e) => handleButtonSettingsChange(e, "fontSize")}
-                            type="number"
-                        />
+                        <div className="flex items-center space-x-4">
+                            <label className="font-medium text-md text-gray-700 w-1/3">Font Size(px)</label>
+                            <input
+                                type="number"
+                                value={buttonSettings.fontSize}
+                                onChange={(e) => handleButtonSettingsChange(e, "fontSize")}
+                                className="flex-grow px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                            />
+                        </div>
                     </div>
 
-                    <h2 className="text-xl font-semibold mt-4 mb-4">Descriptions settings</h2>
-                    <div className="space-y-6">
-                        <InputField
-                            label="Set color"
+                    <h2 className="text-lg font-medium mt-6 mb-4">Descriptions settings</h2>
+                    <div className="space-y-4">
+                        <ColorInput
+                            label="Text color"
                             value={descriptionSettings.color}
-                            onChange={(e) => handleDescriptionSettingsChange(e, "color")}
+                            onChange={(value) => handleDescriptionSettingsChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>, "color")}
                         />
-                        <InputField
-                            label="Font Size(px)"
-                            value={descriptionSettings.fontSize}
-                            onChange={(e) => handleDescriptionSettingsChange(e, "fontSize")}
-                            type="number"
-                        />
+                        <div className="flex items-center space-x-4">
+                            <label className="font-medium text-md text-gray-700 w-1/3">Font Size(px)</label>
+                            <input
+                                type="number"
+                                value={descriptionSettings.fontSize}
+                                onChange={(e) => handleDescriptionSettingsChange(e, "fontSize")}
+                                className="flex-grow px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex justify-end mt-4">
-                        <button
-                            onClick={handleSaveSettings}
-                            className={`mt-4 px-4 py-2 rounded text-sm ${isChanged
-                                ? "bg-blue-500 text-white hover:bg-blue-600"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                }`}
-                            disabled={!isChanged}
-                        >
-                            Save Settings
-                        </button>
+                    <div className="flex justify-end mt-6">
+                    <div className="flex justify-end mt-6">
+                <button
+                    onClick={handleSaveSettings}
+                    className={`px-4 py-2 rounded text-sm flex items-center ${
+                        isChanged && !isSaving
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={!isChanged || isSaving}
+                >
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSaving ? 'Saving...' : 'Save Settings'}
+                </button>
+            </div>
                     </div>
                 </div>
-
                 {/* Preview section */}
                 <div className="w-2/3 bg-white rounded-lg shadow overflow-hidden">
                     <div className="bg-blue-500 p-2">
@@ -272,7 +292,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <div className="w-2/3 bg-white-50 px-5 flex-1 flex flex-col justify-between p-3">
                             <div className="text-center">
-                                <h3 className="text-lg font-bold mb-2">PRODUCT NAME</h3>
+                                <h3 className="text-lg font-medium mb-2">PRODUCT NAME</h3>
                                 <div className="border-2 bg-indigo-50 border-dashed border-gray-300 h-[120px] mb-2 mx-auto p-3">
                                     <div className="flex space-x-4 items-center">
                                         <div className="w-[80px] h-[80px] border-2 rounded-lg border-gray-300 flex-shrink-0"></div>
