@@ -7,11 +7,12 @@ import Image from 'next/image';
 import loginlockbckg from "../assets/loginlockbckg.jpg";
 import loginimg from "../assets/loginimg.svg";
 import Toast from '../components/Toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -58,6 +59,10 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5f6fa]">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-4xl w-full">
@@ -74,10 +79,9 @@ const LoginPage: React.FC = () => {
 
           {/* Right side - Login form */}
           <div className="w-1/2 p-12 bg-[#E5EBFF] flex flex-col justify-center">
-          <h2 className="mt-2  mb-2 text-center text-3xl font-medium text-gray-900">Welcome Back!</h2>
-            {/* <h2 className="text-4xl text-center font-medium mb-4">Welcome Back!</h2> */}
+            <h2 className="mt-2 mb-2 text-center text-3xl font-medium text-gray-900">Welcome Back!</h2>
             <p className="text-gray-600 text-center mb-6 text-sm">Fill in your details to login</p>
-            <form onSubmit={handleSubmit} className="space-y-5 ">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <input
                   id="email-address"
@@ -91,18 +95,29 @@ const LoginPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div>
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="w-full p-3 border-b border-gray-300 focus:border-blue-600 focus:outline-none bg-transparent"
+                  className="w-full p-3 pr-10 border-b border-gray-300 focus:border-blue-600 focus:outline-none bg-transparent"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-500" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-500" />
+                  )}
+                </button>
               </div>
               <button
                 type="submit"
@@ -112,7 +127,6 @@ const LoginPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {/* Logging in... */}
                   </>
                 ) : (
                   "Login"
