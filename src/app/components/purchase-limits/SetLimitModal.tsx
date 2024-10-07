@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SetLimitModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSetLimit: (limit: number | 'token-owned', blockchain?: string, contractAddress?: string) => void;
+    onSetLimit: (limitData: {
+        limit: number | 'token-owned',
+        blockchain?: string,
+        contractAddress?: string
+    }) => void;
     productName: string;
 }
 
@@ -12,14 +16,33 @@ const SetLimitModal: React.FC<SetLimitModalProps> = ({ isOpen, onClose, onSetLim
     const [limitType, setLimitType] = useState<'manual' | 'token-owned'>('manual');
     const [blockchain, setBlockchain] = useState<string>('Ethereum');
     const [contractAddress, setContractAddress] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setQuantityLimit(1);
+            setLimitType('manual');
+            setBlockchain('Ethereum');
+            setContractAddress('');
+            setError(null);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
         if (limitType === 'manual') {
-            onSetLimit(quantityLimit);
+            onSetLimit({ limit: quantityLimit });
         } else {
-            onSetLimit('token-owned', blockchain, contractAddress);
+            if (!contractAddress.trim()) {
+                setError('Contract address is required for token-owned limit');
+                return;
+            }
+            onSetLimit({
+                limit: 'token-owned',
+                blockchain,
+                contractAddress: contractAddress.trim()
+            });
         }
         onClose();
     };
@@ -81,11 +104,15 @@ const SetLimitModal: React.FC<SetLimitModalProps> = ({ isOpen, onClose, onSetLim
                     <input
                         type="text"
                         value={contractAddress}
-                        onChange={(e) => setContractAddress(e.target.value)}
-                        className="w-full border p-2 rounded"
+                        onChange={(e) => {
+                            setContractAddress(e.target.value);
+                            setError(null);
+                        }}
+                        className={`w-full border p-2 rounded ${error ? 'border-red-500' : ''}`}
                         placeholder="0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"
                         disabled={limitType !== 'token-owned'}
                     />
+                    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
                 <div className="flex justify-end">
                     <button
@@ -105,5 +132,5 @@ const SetLimitModal: React.FC<SetLimitModalProps> = ({ isOpen, onClose, onSetLim
         </div>
     );
 };
-    
+
 export default SetLimitModal;

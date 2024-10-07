@@ -8,7 +8,7 @@ const TokenLockInstructions: React.FC = () => {
       <div className="space-y-6">
         <section>
           <h2 className="text-xl font-normal mb-3">Step 1: Create a Campaign</h2>
-          <p className="mb-2 font-light">Go to the Create Campaign page from the main menu. Complete the campaign details:</p>
+          <p className="mb-2 font-light">Go to the Campaign page from the Sidebar menu. Complete the campaign details:</p>
           <ul className="list-disc pl-6 text-m space-y-1 font-light">
             <li>Input a campaign name.</li>
             <li>Select the type of token-gated campaign you would like to create.</li>

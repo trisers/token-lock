@@ -8,21 +8,8 @@ interface PurchaseLimit extends RowDataPacket {
   id: number;
   product_id: string;
   product_name: string;
-  purchase_limit: number;
-  tokens_owned: number;
-}
-
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
-  try {
-    const [rows] = await pool.query<PurchaseLimit[]>('SELECT * FROM purchase_limits WHERE id = ?', [id]);
-    if (rows.length === 0) {
-      return NextResponse.json({ message: 'Purchase limit not found' }, { status: 404 });
-    }
-    return NextResponse.json(rows[0]);
-  } catch (error) {
-    return NextResponse.json({ message: 'Error fetching purchase limit', error }, { status: 500 });
-  }
+  purchase_limit: number | null;
+  tokens_owned: string | null;
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -43,7 +30,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const updatedProductId = product_id ?? currentLimit.product_id;
     const updatedProductName = product_name ?? currentLimit.product_name;
     const updatedPurchaseLimit = purchase_limit ?? currentLimit.purchase_limit;
-    const updatedTokensOwned = tokens_owned ?? currentLimit.tokens_owned;
+    
+    // Handle tokens_owned as JSON
+    let updatedTokensOwned;
+    if (tokens_owned === 'token-owned') {
+      updatedTokensOwned = JSON.stringify({ blockchain: 'Ethereum', contractAddress: '' });
+    } else if (tokens_owned === false) {
+      updatedTokensOwned = null;
+    } else {
+      updatedTokensOwned = currentLimit.tokens_owned;
+    }
 
     const [result] = await pool.query<ResultSetHeader>(
       'UPDATE purchase_limits SET product_id = ?, product_name = ?, purchase_limit = ?, tokens_owned = ? WHERE id = ?',
@@ -57,6 +53,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     console.error('Error updating purchase limit:', error);
     return NextResponse.json({ message: 'Error updating purchase limit', error }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id;
+  try {
+    const [rows] = await pool.query<PurchaseLimit[]>('SELECT * FROM purchase_limits WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return NextResponse.json({ message: 'Purchase limit not found' }, { status: 404 });
+    }
+    return NextResponse.json(rows[0]);
+  } catch (error) {
+    return NextResponse.json({ message: 'Error fetching purchase limit', error }, { status: 500 });
   }
 }
 

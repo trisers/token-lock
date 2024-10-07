@@ -6,7 +6,7 @@ import SetLimitModal from './SetLimitModal';
 import PurchaseLimitsTable from './PurchaseLimitsTable';
 import Toast from '../Toast';
 import { Loader2 } from 'lucide-react';
-import PurchaseLimitsSkeleton from './PurchaseLimitsSkeleton';
+import LoadingSpinner from './PurchaseLimitsSkeleton';
 
 interface Product {
   id: number;
@@ -17,10 +17,11 @@ interface PurchaseLimit {
   id: number;
   product: Product;
   quantityLimit: number | 'token-owned';
+  blockchain?: string;
+  contractAddress?: string;
 }
 
 const PurchaseLimitsComponent: React.FC = () => {
-
   const [isProductSelectionModalOpen, setIsProductSelectionModalOpen] = useState<boolean>(false);
   const [isSetLimitModalOpen, setIsSetLimitModalOpen] = useState<boolean>(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState<boolean>(false);
@@ -31,11 +32,13 @@ const PurchaseLimitsComponent: React.FC = () => {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [limitToDelete, setLimitToDelete] = useState<number | null>(null);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchPurchaseLimits();
   }, []);
+
 
   const fetchPurchaseLimits = async () => {
     setIsLoading(true);
@@ -62,18 +65,32 @@ const PurchaseLimitsComponent: React.FC = () => {
 
   const handleProductSelect = (products: Product[]) => {
     if (products.length > 0) {
-      setSelectedProduct(products[0]);
-      setIsProductSelectionModalOpen(false);
-      setIsSetLimitModalOpen(true);
+      const selectedProduct = products[0];
+      const existingLimit = purchaseLimits.find(limit => limit.product.id === selectedProduct.id);
+
+      if (existingLimit) {
+        showToast(`Purchase limit for "${selectedProduct.name}" already exists`, 'error');
+        setIsProductSelectionModalOpen(false);
+      } else {
+        setSelectedProduct(selectedProduct);
+        setIsProductSelectionModalOpen(false);
+        setIsSetLimitModalOpen(true);
+      }
     }
   };
 
-  const handleSetLimit = async (limit: number | 'token-owned') => {
+  const handleSetLimit = async (limitData: {
+    limit: number | 'token-owned';
+    blockchain?: string;
+    contractAddress?: string;
+  }) => {
     if (selectedProduct) {
       const newLimit: PurchaseLimit = {
         product: selectedProduct,
-        quantityLimit: limit,
+        quantityLimit: limitData.limit,
         id: 0,
+        blockchain: limitData.blockchain,
+        contractAddress: limitData.contractAddress,
       };
 
       try {
@@ -83,15 +100,25 @@ const PurchaseLimitsComponent: React.FC = () => {
           body: JSON.stringify({
             product_id: selectedProduct.id,
             product_name: selectedProduct.name,
-            purchase_limit: typeof limit === 'number' ? limit : null,
-            tokens_owned: limit === 'token-owned',
+            purchase_limit: typeof limitData.limit === 'number' ? limitData.limit : null,
+            tokens_owned: limitData.limit === 'token-owned',
+            blockchain: limitData.blockchain,
+            contract_address: limitData.contractAddress,
           }),
         });
 
-        if (!response.ok) throw new Error('Failed to create purchase limit');
-        const createdLimit = await response.json();
-        setPurchaseLimits([...purchaseLimits, { ...newLimit, id: createdLimit.id }]);
-        showToast('Purchase limit created successfully', 'success');
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 409) {
+            showToast(`Purchase limit for "${selectedProduct.name}" already exists`, 'error');
+          } else {
+            throw new Error(errorData.message || 'Failed to create purchase limit');
+          }
+        } else {
+          const createdLimit = await response.json();
+          setPurchaseLimits([...purchaseLimits, { ...newLimit, id: createdLimit.id }]);
+          showToast('Purchase limit created successfully', 'success');
+        }
       } catch (error) {
         console.error('Error creating purchase limit:', error);
         showToast('Failed to create purchase limit', 'error');
@@ -100,6 +127,12 @@ const PurchaseLimitsComponent: React.FC = () => {
     setIsSetLimitModalOpen(false);
     setSelectedProduct(null);
   };
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToastMessage(message);
+    setToastType(type);
+  };
+
 
   const handleUpdateLimit = (id: number, newLimit: number | 'token-owned') => {
     setChangedLimits({ ...changedLimits, [id]: newLimit });
@@ -112,7 +145,7 @@ const PurchaseLimitsComponent: React.FC = () => {
 
   const handleDeleteLimit = async () => {
     if (limitToDelete === null) return;
-
+    setIsDeleting(true);
     try {
       const response = await fetch(`/api/purchase-limit-update/${limitToDelete}`, {
         method: 'DELETE',
@@ -125,6 +158,7 @@ const PurchaseLimitsComponent: React.FC = () => {
       setChangedLimits(remainingChanges);
       showToast('Purchase limit deleted successfully', 'success');
     } catch (error) {
+      setIsDeleting(false);
       console.error('Error deleting purchase limit:', error);
       showToast('Failed to delete purchase limit', 'error');
     }
@@ -147,11 +181,14 @@ const PurchaseLimitsComponent: React.FC = () => {
             product_id: limitToUpdate.product.id,
             product_name: limitToUpdate.product.name,
             purchase_limit: typeof newLimit === 'number' ? newLimit : null,
-            tokens_owned: newLimit === 'token-owned',
+            tokens_owned: newLimit === 'token-owned' ? 'token-owned' : false,
           }),
         });
 
-        if (!response.ok) throw new Error('Failed to update purchase limit');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to update purchase limit');
+        }
       } catch (error) {
         console.error(`Error updating purchase limit ${id}:`, error);
         showToast('Failed to update purchase limits', 'error');
@@ -177,20 +214,15 @@ const PurchaseLimitsComponent: React.FC = () => {
     setChangedLimits({});
   };
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToastMessage(message);
-    setToastType(type);
-  };
-
   const isChanged = Object.keys(changedLimits).length > 0;
 
   if (isLoading) {
-    return <PurchaseLimitsSkeleton />;
+    return <LoadingSpinner />;
   }
 
   return (
     <div>
-      <div className="max-full mx-auto p-6 bg-white shadow-lg rounded-lg border">
+        <div className="max-full mx-auto p-6 bg-white shadow-lg rounded-lg border">
         <div className='flex justify-between'>
           <h1 className="text-2xl font-normal mb-4">Purchase Limits</h1>
           <button
@@ -199,7 +231,6 @@ const PurchaseLimitsComponent: React.FC = () => {
           >
             + Add Purchase Limits
           </button>
-
         </div>
         <p className='mb-6'>Set limits on the total of a given product shoppers may buy</p>
         <PurchaseLimitsTable
@@ -207,11 +238,13 @@ const PurchaseLimitsComponent: React.FC = () => {
           onUpdateLimit={handleUpdateLimit}
           onDeleteLimit={handleDeleteConfirmation}
           changedLimits={changedLimits}
+          isLoading={isLoading}
         />
         <ProductSelectionModal
           isOpen={isProductSelectionModalOpen}
           onClose={() => setIsProductSelectionModalOpen(false)}
           onSelectProducts={handleProductSelect}
+          existingProducts={purchaseLimits.map(limit => limit.product)}
         />
         <SetLimitModal
           isOpen={isSetLimitModalOpen}
@@ -231,10 +264,18 @@ const PurchaseLimitsComponent: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  className="bg-red-500 text-white px-4 py-2 rounded flex items-center"
                   onClick={handleDeleteLimit}
                 >
-                  Delete
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-6 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  ' Delete'
+                )}
+                 
                 </button>
               </div>
             </div>
@@ -264,7 +305,7 @@ const PurchaseLimitsComponent: React.FC = () => {
           )}
         </button>
       </div>
-      {toastMessage && (
+      { toastMessage && (
         <Toast
           message={toastMessage}
           type={toastType}

@@ -23,8 +23,8 @@ interface CampaignCardProps {
 
 const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
   const router = useRouter();
-  const [status, setStatus] = useState<'Active' | 'Deactivated'>(
-    campaign.campaignStatus === 1 ? 'Active' : 'Deactivated'
+  const [status, setStatus] = useState<'Active' | 'Idle'>(
+    campaign.campaignStatus === 1 ? 'Active' : 'Idle'
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -66,7 +66,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
         throw new Error('Failed to update campaign status');
       }
 
-      setStatus(newStatus === 1 ? 'Active' : 'Deactivated');
+      setStatus(newStatus === 1 ? 'Active' : 'Idle');
       console.log(`Campaign ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error('Error updating campaign status:', error);
@@ -78,7 +78,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
     <div className="bg-white shadow-md border rounded-lg p-4 flex flex-col justify-between h-full">
       <div>
         <div className="flex items-center mb-[37px]">
-          <h2 className="text-xl font-semibold">{campaign.campaignName}</h2>
+          <h2 className="text-lg font-medium">{campaign.campaignName}</h2>
 
           <div className="flex flex-wrap gap-4 ml-4">
             <span className="bg-blue-150 border-blue-500 border-solid border-[1.5px] text-blue-700 text-xs px-2.5 py-0.5 rounded-full">
@@ -90,48 +90,57 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
               </span>
             )}
             <span
-              className={`border-[#007D35] border-solid border-[1.5px] text-xs px-2.5 py-0.5 rounded-full ${
-                status === 'Active'
-                  ? 'bg-[#FEFEF7] text-[#007D35]'
-                  : 'bg-[#FEFEF7] text-[#007D35]'
-              }`}
+              className={`border-solid border-[1.5px] text-xs px-2.5 py-0.5 rounded-full ${status === 'Active'
+                  ? 'border-[#007D35] bg-[#FEFEF7] text-[#007D35]'
+                  : 'border-yellow-500 bg-[#FEFEF7] text-yellow-600'
+                }`}
             >
               {status}
             </span>
           </div>
         </div>
 
-        <div className="space-y-6 text-sm">
+        <div className="space-y-6">
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Product</span>
             <br />
-            {campaign.selectedProducts === 'all' || (Array.isArray(campaign.selectedProducts) && campaign.selectedProducts.length === 0)
-              ? 'All products'
-              : `${campaign.selectedProducts?.length || 0} products selected`}
+            <span className="text-sm">
+              {campaign.selectedProducts === 'all' || (Array.isArray(campaign.selectedProducts) && campaign.selectedProducts.length === 0)
+                ? 'All products'
+                : `${campaign.selectedProducts?.length || 0} products selected`}
+            </span>
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Eligible Accounts</span>
             <br />
-            {campaign.eligibilityConditions ? `${campaign.eligibilityConditions.length} condition(s) set` : 'No conditions set'}
+            <span className="text-sm">
+
+              {campaign.eligibilityConditions ? `${campaign.eligibilityConditions.length} condition(s) set` : 'No conditions set'}
+            </span>
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>Start</span>
             <br />
-            {formatDate(campaign.startDate)}
+            <span className="text-sm">
+
+              {formatDate(campaign.startDate)}
+            </span>
           </p>
           <p>
             <span style={{ fontFamily: 'Nunito Sans', color: '#2C2C2C', fontWeight: 'bold' }}>End</span>
             <br />
-            {formatDate(campaign.endDate)}
+            <span className="text-sm">
+
+              {formatDate(campaign.endDate)}
+            </span>
           </p>
         </div>
       </div>
       <div className="mt-[48px] flex justify-between items-center mb-4">
         <button
           type="button"
-          className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors ${
-            isLoading ? 'opacity-70 cursor-not-allowed' : ''
-          } flex items-center justify-center w-32`}
+          className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''
+            } flex items-center justify-center w-32`}
           onClick={handleEditCampaign}
           disabled={isLoading}
         >
@@ -145,15 +154,14 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
         </button>
         <div className="text-sm">
           <span>
-            This campaign is {status}
+            This campaign is {status} -
           </span>
           <button
             onClick={handleActivateDeactivate}
-            className={`ml-2 ${
-              status === 'Active'
+            className={`ml-2 ${status === 'Active'
                 ? 'text-red-500 hover:text-red-600'
                 : 'text-green-500 hover:text-green-600'
-            } transition-colors`}
+              } transition-colors`}
           >
             Click to {status === 'Active' ? 'Deactivate' : 'Activate'}
           </button>
@@ -162,4 +170,5 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign }) => {
     </div>
   );
 };
+
 export default CampaignCard;

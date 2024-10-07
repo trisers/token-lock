@@ -1,24 +1,12 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
-const PurchaseLimitsSkeleton: React.FC = () => {
+const TableLoadingSpinner: React.FC = () => {
   return (
-    <div className="max-w-full mx-auto p-6 bg-white shadow-lg rounded-lg border animate-pulse">
-      <div className="flex justify-between mb-4">
-        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-      </div>
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
-      <div className="space-y-4">
-        {[...Array(5)].map((_, index) => (
-          <div key={index} className="flex justify-between items-center">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-8"></div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <div className="flex justify-center items-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
   );
 };
 
-export default PurchaseLimitsSkeleton;
+export default TableLoadingSpinner;
