@@ -17,9 +17,32 @@ interface PurchaseLimitsTableProps {
   onUpdateLimit: (id: number, newLimit: number | 'token-owned') => void;
   onDeleteLimit: (id: number) => void;
   changedLimits: { [key: number]: number | 'token-owned' };
+  isLoading: boolean;
 }
 
-const PurchaseLimitsTable: React.FC<PurchaseLimitsTableProps> = ({ limits, onUpdateLimit, onDeleteLimit, changedLimits }) => {
+const PurchaseLimitsTable: React.FC<PurchaseLimitsTableProps> = ({ 
+  limits, 
+  onUpdateLimit, 
+  onDeleteLimit, 
+  changedLimits,
+  isLoading
+}) => {
+  if (isLoading) {
+    return (
+      <div className="w-full flex justify-center items-center h-32">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (limits.length === 0) {
+    return (
+      <div className="w-full text-center py-4">
+        No data found
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <table className="w-full">
@@ -52,7 +75,7 @@ const PurchaseLimitsTable: React.FC<PurchaseLimitsTableProps> = ({ limits, onUpd
                       />
                     )}
                   </td>
-                  <td className="px-2 py-2 text-left">
+                  <td className="px-1 py-1 text-center">
                     <button className='hover:text-red-600' onClick={() => onDeleteLimit(limit.id)}>x</button>
                   </td>
                 </tr>
